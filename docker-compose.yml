@@ -1,0 +1,36 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "${APP_PORT:-8038}:80"
+    volumes:
+      - .:/src
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+      - db
+  app:
+    build:
+      context: .
+      dockerfile: docker/php-fpm/Dockerfile
+      target: build
+    volumes:
+        - .:/src
+    depends_on:
+      - db
+  db:
+    platform: linux/x86_64
+    image: postgres:14
+    ports:
+      - "33073:5432"
+    volumes:
+      - ./docker/postgresql:/var/lib/postgresql
+      - ./docker/postgresql/init-testing-db.sql:/docker-entrypoint-initdb.d/init-testing-db.sql
+    environment:
+      POSTGRES_DATABASE: homestead
+      POSTGRES_USER: homestead
+      POSTGRES_PASSWORD: secret
+      POSTGRES_ROOT_PASSWORD: supersecret
+  redis:
+    image: redis:4
